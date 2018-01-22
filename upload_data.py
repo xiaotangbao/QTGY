@@ -2,7 +2,11 @@ import cPickle
 import pandas as pd
 from odps import ODPS
 
-train_data, train_score, test_data = cPickle.load(open('output/0119/online_data_upload.pkl'))
+train_data, train_score, test_data = cPickle.load(open('output/0119/online_data_final.pkl'))
+regressor, scaler = cPickle.load(open('output/0119/Lasso_Regressor.pkl'))
+train_data = scaler.transform(train_data)
+train_score = scaler.y_scaler.transform(train_score)
+test_data = scaler.transform(test_data)
 
 train_data.to_csv('explore/Lasso_train_data.csv')
 test_data.to_csv('explore/Lasso_data.csv')
