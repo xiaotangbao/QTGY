@@ -14,6 +14,7 @@ def _identify_categorical_variable(df):
 
 from categorical_processing import *
 full_data = pd.concat([train_data, test_data], axis=0)
+'''
 discrete_col = _identify_categorical_variable(full_data)
 categorical_data = full_data.loc[:,discrete_col]
 categorical_data.columns = map(lambda x: x+'_new', categorical_data.columns)
@@ -21,9 +22,16 @@ full_data = pd.concat([full_data, categorical_data], axis=1)
 full_data, enc, mapping_dict, new_col_name = categorical_encoding(full_data, categorical_data.columns)
 new_col_name = filter(lambda x: not re.match(r'.*\_0',x), new_col_name)
 full_data.drop(labels=filter(lambda x: re.match(r'.*\_0',x), full_data.columns), axis=1,inplace=True)
-
 train_data = full_data.loc[train_data.index,]
 test_data = full_data.loc[test_data.index,]
+
+'''
+full_data = new_categorical_df(full_data)
+train_data_new = full_data.loc[train_data.index, :]
+test_data_new = full_data.loc[test_data.index, :]
+
+train_data = pd.concat([train_data, train_data_new], axis=1)
+test_data = pd.concat([test_data, test_data_new], axis=1)
 
 # Train the model
 from regressor import *
@@ -32,12 +40,16 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ShuffleSplit
 
-scaler = YGTQ_Scaler(method='categorical', max_z_score=3, discrete_col=new_col_name, discrete_max_z_score=2,
-                     discrete_weight=10)
+scaler = YGTQ_Scaler(method='categorical', max_z_score=2, discrete_col=train_data_new.columns, discrete_max_z_score=2.5,
+                     discrete_weight=5)
+
+
 
 train_data, train_score = scaler.fit_transform(train_data, train_score, auxiliary_data=None, test_data=test_data)
 test_data = scaler.transform(test_data)
 
+
+'''
 regressor = LassoCV(normalize=False, alphas=np.arange(0.0001,0.010,0.0002),cv=ShuffleSplit(n_splits=30,test_size=0.2),n_jobs=-1)
 regressor.fit(train_data, train_score)
 import numpy as np
@@ -48,7 +60,7 @@ print regressor.alpha_, mse.mean(), mse.max(), (estimator.coef_!=0).sum()
 chosen_col = train_data.columns[(regressor.coef_!=0)]
 train_data[chosen_col].to_csv('explore/Lasso_train_data.csv')
 test_data[chosen_col].to_csv('explore/Lasso_data.csv')
-
+'''
 
 for alpha in np.arange(0.001,0.01,0.001):
 	regressor = Lasso(normalize=False, alpha=alpha)

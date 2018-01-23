@@ -1,5 +1,6 @@
 import pandas as pd
 import cPickle
+import re
 
 def select_categorical(data, category_n):
     import re
@@ -10,6 +11,13 @@ def select_categorical(data, category_n):
         if (len(set(data.loc[:, i])) <= category_n):
             categorical_columns.append(i)
     return categorical_columns
+
+def _identify_categorical_variable(df):
+    tool_mark = re.compile(r'[A-Za-z]+_?[A-Za-z]+.*')
+    categorical_columns = filter(lambda x: re.match(tool_mark, str(x)), df.columns)
+    #return categorical_columns
+    return ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
+     'OPERATION_ID','Tool (#5)', 'TOOL (#3)']
 
 def categorical_encoding(data, col_name, encoder=None,mapping_dict=None,new_col_name=None, test_data=None):
     from sklearn.preprocessing import OneHotEncoder
@@ -64,7 +72,31 @@ def chunk_dataframe_generator(data, feature_dict, category):
     assert category in feature_dict
     return data.loc[:, feature_dict[category]]
 
+def categorical_mean(df):
+    for col in df.columns[1:]:
+        df.loc[:,col] = df.loc[:,col].mean()
+    return df
+
+def new_categorical_df(data):
+    categorical_columns = _identify_categorical_variable(data)
+    feature_dict = feature_subgrouping(data, categorical_columns)
+    final_df = pd.DataFrame(index=data.index)
+    for category in categorical_columns:
+        partial_df = chunk_dataframe_generator(data, feature_dict, category)
+        partial_df = partial_df.groupby(category).apply(lambda x: categorical_mean(x))
+        final_df = pd.concat([final_df, partial_df], axis=1)
+    print(final_df.shape)
+    final_df.drop(categorical_columns,inplace=True,axis=1)
+    print(final_df.shape)
+    for col in final_df.columns:
+        final_df.rename(columns={col: 'new_' + col}, inplace=True)
+    return final_df
+
+
+
+
 if __name__ == '__main__':
+    '''
     category_n = 5
     train_data, train_score, test_data = cPickle.load(open('online_data.pkl'))
     data = pd.concat([train_data, test_data])
@@ -77,11 +109,6 @@ if __name__ == '__main__':
     train_new_col_name = filter(lambda x:(train_data[x]==0).sum()!=499,train_data.columns)
     train_data = train_data.loc[:,train_new_col_name]
     test_data = test_data.loc[:,train_new_col_name]
-
-
-
-
-
 
     cPickle.dump((train_data, train_score, test_data), open('online_data_cate.pkl', 'w'))
     raise KeyboardInterrupt
@@ -100,3 +127,13 @@ if __name__ == '__main__':
         df = chunk_dataframe_generator(data, feature_dict, category)
         na_count_df = pd.concat([na_count_df, data.loc[:, category], df.isnull().sum(1)], axis=1)
     na_count_df.to_csv('Categorical Variable.csv')
+    '''
+    train_data, train_score, test_data, test_score = cPickle.load(open('offline_data.pkl'))
+    data = pd.concat([train_data, test_data], axis=0)
+    data = new_categorical_df(data)
+    train_data = data.loc[train_data.index, :]
+    test_data = data.loc[test_data.index, :]
+
+    cPickle.dump((train_data, test_data), open('offline_data_cf.pkl', 'w'))
+
+
