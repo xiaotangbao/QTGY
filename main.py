@@ -13,13 +13,8 @@ def _identify_categorical_variable(df):
 
 from categorical_processing import *
 full_data = pd.concat([train_data, test_data], axis=0)
-discrete_col = _identify_categorical_variable(full_data)
-categorical_data = full_data.loc[:,discrete_col]
-categorical_data.columns = map(lambda x: x+'_new', categorical_data.columns)
-full_data = pd.concat([full_data, categorical_data], axis=1)
-full_data, enc, mapping_dict, new_col_name = categorical_encoding(full_data, categorical_data.columns)
-new_col_name = filter(lambda x: not re.match(r'.*\_0',x), new_col_name)
-full_data.drop(labels=filter(lambda x: re.match(r'.*\_0',x), full_data.columns), axis=1,inplace=True)
+
+full_data, new_col_name = categorical_processing(full_data, method='complex')
 
 train_data = full_data.loc[train_data.index,]
 test_data = full_data.loc[test_data.index,]
@@ -30,11 +25,11 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.linear_model import LassoCV
 import numpy as np
 
-regressor = LassoCV(normalize=False, n_jobs=-1, alphas=np.arange(0.0001,0.010,0.0002), cv=ShuffleSplit(n_splits=30,test_size=0.2))
+regressor = LassoCV(normalize=False, n_jobs=-1, alphas=np.arange(0.001,0.006,0.0001), cv=ShuffleSplit(n_splits=30,test_size=0.2))
 
 regressor, scaler = regressor_train(regressor, train_data, train_score, auxiliary_data=None, test_data=test_data,
-                                    normalize='categorical', discrete_col=new_col_name, max_z_score=2, discrete_max_z_score=2.5,
-                                    discrete_weight=5)
+                                    normalize='categorical', discrete_col=new_col_name, max_z_score=2, discrete_max_z_score=5,
+                                    discrete_weight=1)
 
 from sklearn.metrics import mean_squared_error
 print mean_squared_error(train_score, regressor_predict(regressor, train_data, scaler))

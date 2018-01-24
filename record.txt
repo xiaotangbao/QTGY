@@ -27,3 +27,9 @@
 参数：max_z_score=2, max_discrete_score=2.5, discrete_weight=5, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, alphas=[0.008], y_scaler(with_std=True)
 
 测试集成绩：MSE 0.02693，排名1。下面的朋友你们悠着点o(￣ヘ￣o＃)
+
+1.23
+尝试的模型：Lasso Regressor
+参数：max_z_score=2, max_discrete_score=5, discrete_weight=1, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, cv=ShuffleSplit(n_splits=30,test_size=0.2), np.arange(0.001,0.006,0.0001), method='complex'
+
+测试集成绩：MSE 0.02148，排名1。王小健你小心过拟合A榜啊 ٩(๑´0`๑)۶

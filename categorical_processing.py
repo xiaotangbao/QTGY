@@ -85,14 +85,31 @@ def new_categorical_df(data):
         partial_df = chunk_dataframe_generator(data, feature_dict, category)
         partial_df = partial_df.groupby(category).apply(lambda x: categorical_mean(x))
         final_df = pd.concat([final_df, partial_df], axis=1)
-    print(final_df.shape)
     final_df.drop(categorical_columns,inplace=True,axis=1)
     print(final_df.shape)
     for col in final_df.columns:
         final_df.rename(columns={col: 'new_' + col}, inplace=True)
     return final_df
 
+def categorical_processing(data, method='simple'):
 
+    assert method in ['simple','complex']
+
+    if method == 'simple':
+        discrete_col = _identify_categorical_variable(data)
+        categorical_data = data.loc[:, discrete_col]
+        categorical_data.columns = map(lambda x: x + '_new', categorical_data.columns)
+        data = pd.concat([data, categorical_data], axis=1)
+        data, enc, mapping_dict, new_col_name = categorical_encoding(data, categorical_data.columns)
+        new_col_name = filter(lambda x: not re.match(r'.*\_0', x), new_col_name)
+        data.drop(labels=filter(lambda x: re.match(r'.*\_0', x), data.columns), axis=1, inplace=True)
+
+    else:
+        new_data = new_categorical_df(data)
+        new_col_name = new_data.columns
+        data = pd.concat([data, new_data], axis=1)
+
+    return data, new_col_name
 
 
 if __name__ == '__main__':
@@ -112,13 +129,16 @@ if __name__ == '__main__':
 
     cPickle.dump((train_data, train_score, test_data), open('online_data_cate.pkl', 'w'))
     raise KeyboardInterrupt
-
-
+    '''
+    data, score, _ = cPickle.load(open('online_data.pkl'))
+    categorical_columns = ['TOOL','Tool','TOOL_ID','Tool (#1)','TOOL (#1)','TOOL (#2)','Tool (#2)','Tool (#3)','Tool (#4)','OPERATION_ID',
+		        'Tool (#5)','TOOL (#3)']
     feature_dict = feature_subgrouping(data, categorical_columns)
 
-    category = 'Tool (#1)'
+    category = 'TOOL (#3)'
     df = chunk_dataframe_generator(data, feature_dict, category)
-
+    pd.concat([df,score],axis=1).to_csv('explore/categorical_explore.csv')
+    raise KeyboardInterrupt
 
     pd.concat([data.loc[:, category], df, df.isnull().sum(1)], axis=1).to_csv('data_explore.csv')
 
@@ -135,5 +155,5 @@ if __name__ == '__main__':
     test_data = data.loc[test_data.index, :]
 
     cPickle.dump((train_data, test_data), open('offline_data_cf.pkl', 'w'))
-
+    '''
 
