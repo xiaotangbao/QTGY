@@ -33,3 +33,18 @@
 参数：max_z_score=2, max_discrete_score=5, discrete_weight=1, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, cv=ShuffleSplit(n_splits=30,test_size=0.2), np.arange(0.001,0.006,0.0001), method='complex'
 
 测试集成绩：MSE 0.02148，排名1。王小健你小心过拟合A榜啊 ٩(๑´0`๑)۶
+
+1.24
+尝试的模型：Lasso Regressor Ensemble
+参数1：max_z_score=2, max_discrete_score=5, discrete_weight=1, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, cv=ShuffleSplit(n_splits=30,test_size=0.2), np.arange(0.001,0.006,0.0001), method='complex'
+参数2：max_z_score=2, max_discrete_score=2.5, discrete_weight=5, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, cv=ShuffleSplit(n_splits=30,test_size=0.2), alphas=np.arange(0.0001,0.010,0.0002), method='simple', merge_list=[('TOOL (#1)','Chamber ID'),('TOOL (#2)','330X91'),('Tool (#5)', '520X137')]
+
+测试集成绩：MSE 0.02447，排名1。我们怎么突然就认真起来了(?￣△￣)?
+
+
+最终模型提交：
+simple模型：max_z_score, max_discrete_score, discrete_weight, auxiliary_data,alpha, merge_list
+complex模型: max_z_score, max_discrete_score, discrete_weight, auxiliary_data, alpha
+所有模型: mean_threshold, zero_equal_na, median_thd, record_drop, drop_threshold, remove_correlation, ENSEMBLE method
+Pay Super Attention to：cv的参数结果与A榜测试集上的最优参数是否符合;任何对于特征选择的操作，即便在多个测试集上得到验证，也要保持警惕;B榜的两次提交应该采取何种策略。
+
