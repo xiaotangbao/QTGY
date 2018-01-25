@@ -48,3 +48,10 @@ complex模型: max_z_score, max_discrete_score, discrete_weight, auxiliary_data,
 所有模型: mean_threshold, zero_equal_na, median_thd, record_drop, drop_threshold, remove_correlation, ENSEMBLE method
 Pay Super Attention to：cv的参数结果与A榜测试集上的最优参数是否符合;任何对于特征选择的操作，即便在多个测试集上得到验证，也要保持警惕;B榜的两次提交应该采取何种策略。
 
+Question to Ask:
+zero_equal_na为True是不是总是比False好？
+simple模型和complex模型是否有绝对的好坏？
+Bagging模型是否总比单一模型好？
+auxiliary_data不传递测试集是否总比传递好？
+max_z_score, max_discrete_score, discrete_weight是否有绝对的最优值？
+
