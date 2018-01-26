@@ -1,5 +1,5 @@
+# coding=utf-8
 import pandas as pd
-import cPickle
 import re
 
 def select_categorical(data, category_n):
@@ -13,22 +13,16 @@ def select_categorical(data, category_n):
     return categorical_columns
 
 def _identify_categorical_variable(df):
-    tool_mark = re.compile(r'[A-Za-z]+_?[A-Za-z]+.*')
-    categorical_columns = filter(lambda x: re.match(tool_mark, str(x)), df.columns)
-    #return categorical_columns
-    return ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
+    col = ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
      'OPERATION_ID','Tool (#5)', 'TOOL (#3)']
+    assert set(col) < set(df.columns)
+    return col
 
 def categorical_encoding(data, col_name, encoder=None,mapping_dict=None,new_col_name=None, test_data=None):
+
     from sklearn.preprocessing import OneHotEncoder
     def concat_encoder(data,col_name,categorical_data,new_col_name):
-        '''
-        for col in col_name:
-            col_ = filter(lambda x: x.startswith(col), new_col_name)
-            data_front = data.loc[:, :col].drop(col, axis=1)
-            data_back = data.loc[:, col:].drop(col, axis=1)
-            data = pd.concat([data_front, categorical_data[col_], data_back], axis=1)
-        '''
+        # 使用离散化后的变量替代原有的分类变量，新变量放在DataFrame的最后
         assert categorical_data.shape[0] == data.shape[0]
         assert categorical_data.shape[1] == len(new_col_name)
         data = pd.concat([data.drop(labels=col_name, axis=1), categorical_data], axis=1)
@@ -38,18 +32,22 @@ def categorical_encoding(data, col_name, encoder=None,mapping_dict=None,new_col_
     print(len(col_name))
     if encoder is None:
         output_index = data.index
+        # test_data可以传递测试数据，防止测试数据出现训练数据没有的分类变量
         data = data if test_data is None else pd.concat([data,test_data],axis=0)
         new_col_name = []
         mapping_dict = {}
         for col in col_name:
+            # 创建分类变量取值到整数的映射，并建立离散化后的变量名
             all_value = set(data[col])
             mapping_dict[col] = dict(map(lambda x, y: (x, y), all_value, xrange(len(all_value))))
             data[col] = data[col].apply(lambda x: mapping_dict[col][x])
             new_col_name.extend(map(lambda x: col + '_' + str(x), xrange(len(all_value))))
         print(len(new_col_name))
 
+        # 离散化分类变量
         enc = OneHotEncoder(categorical_features='all', sparse=False)
         categorical_data = pd.DataFrame(enc.fit_transform(data[col_name]),index=data.index,columns=new_col_name)
+        # 分类变量替换为离散化变量
         final_data = concat_encoder(data,col_name,categorical_data,new_col_name)
         final_data = final_data.loc[output_index]
         return final_data, enc, mapping_dict, new_col_name
@@ -63,13 +61,17 @@ def categorical_encoding(data, col_name, encoder=None,mapping_dict=None,new_col_
         return data
 
 def feature_subgrouping(data, col_name):
+    # 根据指定的工具变量确定变量的index
     col_index = map(lambda x: list(data.columns).index(x), col_name)
     col_index.append(data.shape[1])
+    assert col_index == sorted(col_index)
+    # 按顺序确定每个工具变量对应的特征
     feature_dict = {col_name[i]: data.columns[col_index[i]:col_index[i + 1]] for i in xrange(len(col_name))}
     return feature_dict
 
 def chunk_dataframe_generator(data, feature_dict, category):
     assert category in feature_dict
+    # 返回工具变量对应的特征矩阵
     return data.loc[:, feature_dict[category]]
 
 def categorical_mean(df):
@@ -95,6 +97,7 @@ def categorical_processing(data, method='simple'):
 
     assert method in ['simple','complex']
 
+    # simple选项下，每个工具变量离散化后去除冗余的一个变量
     if method == 'simple':
         discrete_col = _identify_categorical_variable(data)
         categorical_data = data.loc[:, discrete_col]
@@ -104,6 +107,7 @@ def categorical_processing(data, method='simple'):
         new_col_name = filter(lambda x: not re.match(r'.*\_0', x), new_col_name)
         data.drop(labels=filter(lambda x: re.match(r'.*\_0', x), data.columns), axis=1, inplace=True)
 
+    # complex选项下，根据工具变量求均值，构造新的特征矩阵
     else:
         new_data = new_categorical_df(data)
         new_col_name = new_data.columns
@@ -130,6 +134,7 @@ if __name__ == '__main__':
     cPickle.dump((train_data, train_score, test_data), open('online_data_cate.pkl', 'w'))
     raise KeyboardInterrupt
     '''
+    import cPickle
     data, score, _ = cPickle.load(open('online_data.pkl'))
     categorical_columns = ['TOOL','Tool','TOOL_ID','Tool (#1)','TOOL (#1)','TOOL (#2)','Tool (#2)','Tool (#3)','Tool (#4)','OPERATION_ID',
 		        'Tool (#5)','TOOL (#3)']

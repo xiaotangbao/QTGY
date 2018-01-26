@@ -41,12 +41,18 @@
 
 测试集成绩：MSE 0.02447，排名1。我们怎么突然就认真起来了(?￣△￣)?
 
+1.25
+尝试的模型：Baggging Lasso Regressor
+参数：max_z_score=2, discrete_max_z_score=5, discrete_weight=1, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, method='complex', alpha=0.022, n_estimators=200, max_features=0.7
+
+测试集成绩：MSE 0.01928，排名1。我就是来骗你们过拟合哒(づ￣ 3￣)づ
+
 
 最终模型提交：
 simple模型：max_z_score, max_discrete_score, discrete_weight, auxiliary_data,alpha, merge_list
 complex模型: max_z_score, max_discrete_score, discrete_weight, auxiliary_data, alpha
 所有模型: mean_threshold, zero_equal_na, median_thd, record_drop, drop_threshold, remove_correlation, ENSEMBLE method
-Pay Super Attention to：cv的参数结果与A榜测试集上的最优参数是否符合;任何对于特征选择的操作，即便在多个测试集上得到验证，也要保持警惕;B榜的两次提交应该采取何种策略。
+Pay Super Attention to：cv的参数结果与A榜测试集上的最优参数是否符合;任何对于特征选择的操作，即便在多个测试集上得到验证，也要保持警惕;每一个操作都尽量输出结果人工确认。
 
 Question to Ask:
 zero_equal_na为True是不是总是比False好？
@@ -55,3 +61,7 @@ Bagging模型是否总比单一模型好？
 auxiliary_data不传递测试集是否总比传递好？
 max_z_score, max_discrete_score, discrete_weight是否有绝对的最优值？
 
+B榜暂时考虑的策略：
+第一天提交单一模型，zero_equal_na参数通过多个测试集以及设计实验的方式确定，其他参数通过线下测试集调到尽量优即可，不要求最优。
+第一天成绩好的情况下，固定第一天的参数做Bagging。
+第一天成绩不好的情况下，调整参数并做Bagging。

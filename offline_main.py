@@ -1,37 +1,21 @@
+# coding=utf-8
 import cPickle
 import pandas as pd
 
 train_data, train_score, test_data, test_score = cPickle.load(open('offline_data.pkl'))
 print train_data.shape, test_data.shape
 
-import re
-def _identify_categorical_variable(df):
-	tool_mark = re.compile(r'[A-Za-z]+_?[A-Za-z]+.*')
-	categorical_columns = filter(lambda x: re.match(tool_mark, str(x)), df.columns)
-	#return categorical_columns
-	return ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
-	 'OPERATION_ID','Tool (#5)', 'TOOL (#3)']
 
 from categorical_processing import *
+# 训练集和测试集合并后，对工具变量进行处理，再分离训练集和测试集
 full_data = pd.concat([train_data, test_data], axis=0)
-'''
-discrete_col = _identify_categorical_variable(full_data)
-categorical_data = full_data.loc[:,discrete_col]
-categorical_data.columns = map(lambda x: x+'_new', categorical_data.columns)
-full_data = pd.concat([full_data, categorical_data], axis=1)
-full_data, enc, mapping_dict, new_col_name = categorical_encoding(full_data, categorical_data.columns)
-new_col_name = filter(lambda x: not re.match(r'.*\_0',x), new_col_name)
-full_data.drop(labels=filter(lambda x: re.match(r'.*\_0',x), full_data.columns), axis=1,inplace=True)
+
+full_data, new_col_name = categorical_processing(full_data, method='complex')
+
 train_data = full_data.loc[train_data.index,]
 test_data = full_data.loc[test_data.index,]
 
-'''
-full_data = new_categorical_df(full_data)
-train_data_new = full_data.loc[train_data.index, :]
-test_data_new = full_data.loc[test_data.index, :]
-
-train_data = pd.concat([train_data, train_data_new], axis=1)
-test_data = pd.concat([test_data, test_data_new], axis=1)
+print train_data.shape, test_data.shape
 
 # Train the model
 from regressor import *
@@ -40,17 +24,17 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ShuffleSplit
 
-scaler = YGTQ_Scaler(method='categorical', max_z_score=2, discrete_col=train_data_new.columns, discrete_max_z_score=2.5,
-                     discrete_weight=5)
+# 创建scaler，指定连续变量的z分数限制、离散变量名、离散变量的z分数限制、离散变量权重
+scaler = YGTQ_Scaler(method='categorical', max_z_score=2, discrete_col=new_col_name, discrete_max_z_score=5,
+                     discrete_weight=1)
 
-
-
+# 训练scaler，默认不使用测试集作为辅助数据
 train_data, train_score = scaler.fit_transform(train_data, train_score, auxiliary_data=None, test_data=test_data)
 test_data = scaler.transform(test_data)
 
-
 '''
-regressor = LassoCV(normalize=False, alphas=np.arange(0.0001,0.010,0.0002),cv=ShuffleSplit(n_splits=30,test_size=0.2),n_jobs=-1)
+# 确认线下cv的最优参数是否与线上测试集的最优参数相近
+regressor = LassoCV(normalize=False, alphas=np.arange(0.001,0.006,0.0002),cv=ShuffleSplit(n_splits=30,test_size=0.2),n_jobs=-1)
 regressor.fit(train_data, train_score)
 import numpy as np
 estimator = regressor
@@ -62,7 +46,8 @@ train_data[chosen_col].to_csv('explore/Lasso_train_data.csv')
 test_data[chosen_col].to_csv('explore/Lasso_data.csv')
 '''
 
-for alpha in np.arange(0.001,0.01,0.001):
+# 根据线上的测试集调参
+for alpha in np.arange(0.0005,0.006,0.0005):
 	regressor = Lasso(normalize=False, alpha=alpha)
 	regressor.fit(train_data, train_score)
 

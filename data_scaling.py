@@ -5,13 +5,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 def _identify_categorical_variable(df):
-	tool_mark = re.compile(r'[A-Za-z]+_?[A-Za-z]+.*')
-	categorical_columns = filter(lambda x: re.match(tool_mark, str(x)), df.columns)
-	#return categorical_columns
-	return ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
+	# 工具变量以指定的方式返回
+	col = ['TOOL', 'Tool', 'TOOL_ID', 'Tool (#1)', 'TOOL (#1)', 'TOOL (#2)', 'Tool (#2)', 'Tool (#3)', 'Tool (#4)',
 	 'OPERATION_ID','Tool (#5)', 'TOOL (#3)']
+	assert set(col) < set(df.columns)
+	return col
 
 def _category_normalize(df, category, X_scaler_dict, fit=True, limit=None):
+	# 确定工具变量的取值，传递的df的category列的取值必须一致
 	assert len(set(df.loc[:,category])) == 1
 	label = df.loc[:, category][0]
 	df = df.drop(labels=category, axis=1)
@@ -38,7 +39,7 @@ def _category_normalize(df, category, X_scaler_dict, fit=True, limit=None):
 				                        index=df.index)
 	return final_df
 
-
+'''
 def _find_best_bin(column, threshold):
 	all_value = sorted(list(set(column)))
 	derivative = map(lambda i: (all_value[i+1]-all_value[i])/float(all_value[i]-all_value[i-1]), xrange(1,len(all_value)-1))
@@ -56,7 +57,7 @@ def _all_binarize(df, bin=4):
 		return bin_df.apply(lambda x: bin_dict[x])
 	final_df = df.apply(lambda x: __binarize_one(x))
 	return final_df
-
+'''
 
 class YGTQ_Scaler():
 	# method参数控制标准化方法，max_z_score是连续变量的极端值阈值，discrete_col是离散变量的列名，extreme_process控制极端值的处理方法，discrete_max_z_score是离散变量的极端值阈值，discrete_weight是离散变量的额外权重
@@ -128,14 +129,18 @@ class YGTQ_Scaler():
 			self.X_scaler = {}
 			if self.pca_n_components is not None:
 				self.pca_scaler = {}
+			# 工具变量及对应的特征字典
 			feature_dict = categorical_processing.feature_subgrouping(combined_data, categorical_columns)
+			# 创建每个工具变量下每个取值的scaler
 			for category in categorical_columns:
 				self.X_scaler[category] = {}
 				for label in set(combined_data.loc[:, category]):
 					self.X_scaler[category][label] = StandardScaler()
+				# 训练scaler并返回标准化后的特征矩阵
 				partial_df = categorical_processing.chunk_dataframe_generator(combined_data, feature_dict, category)
 				partial_df = partial_df.groupby(category).apply(
 					lambda x: _category_normalize(x, category, self.X_scaler, limit=None))
+				# 可选的PCA过程
 				if self.pca_n_components is not None:
 					self.pca_scaler[category] = PCA(n_components=min(self.pca_n_components,partial_df.shape[1]))
 					partial_df = pd.DataFrame(self.pca_scaler[category].fit_transform(partial_df), index=partial_df.index,
@@ -149,7 +154,6 @@ class YGTQ_Scaler():
 
 		# 某些特征在工具变量的一个取值下没有方差，会导致结果的不稳定性
 		self.chosen_col = combined_data.columns[(abs(combined_data.mean())<0.01)]
-		#self.chosen_col = combined_data.columns
 		print len(self.chosen_col)
 		combined_data = combined_data.loc[:,self.chosen_col]
 
