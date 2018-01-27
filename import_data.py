@@ -68,6 +68,9 @@ if __name__ == '__main__':
 	train_data, train_score, test_data = cPickle.load(open('online_data_upload.pkl'))
 	train_data = pd.concat([train_data,train_score],axis=1)
 
+	train_data.to_csv('explore/train_data_for_explore.csv')
+	test_data.to_csv('explore/test_data_for_explore.csv')
+
 	odps = ODPS('LTAIYQbRZMzJSs1V', 'DUHOB76E6mK4mm14o3NH2fD0r7im7y', 'YGTQ',
 	            endpoint='http://service.odps.aliyun.com/api')
 

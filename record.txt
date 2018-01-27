@@ -47,6 +47,12 @@
 
 测试集成绩：MSE 0.01928，排名1。我就是来骗你们过拟合哒(づ￣ 3￣)づ
 
+1.26
+尝试的模型：Bagging Lasso Regressor
+参数：max_z_score=2, discrete_max_z_score=5, discrete_weight=1, auxiliary_data=None, mean_threshold=0.01, zero_equal_na=True, median_thd=0.2, method='complex', alpha=0.022, n_estimators=200, max_features=0.7, drop 'NH1835'
+
+测试集成绩：MSE 0.02051，排名1。霸榜大计完成，最后两天我们一起加油吧 []~(￣▽￣)~*
+
 
 最终模型提交：
 simple模型：max_z_score, max_discrete_score, discrete_weight, auxiliary_data,alpha, merge_list

@@ -4,9 +4,9 @@ from regressor import *
 from sklearn.metrics import mean_squared_error
 
 #train_data,train_score,data = cPickle.load(open('online_data.pkl'))
-train_data, train_score, data = cPickle.load(open('online_data_final.pkl'))
-regressor, scaler= cPickle.load(open('Lasso_Regressor.pkl'))
-
+train_data, train_score, data = cPickle.load(open('output/0125/online_data_final.pkl'))
+regressor, scaler= cPickle.load(open('output/0125/Bagging_Lasso_Regressor.pkl'))
+'''
 import numpy as np
 mse = regressor.mse_path_[np.where(regressor.alphas_ == regressor.alpha_)]
 print regressor.alpha_, mse.mean(), mse.max(), (regressor.coef_!=0).sum()
@@ -16,7 +16,7 @@ train_data[chosen_col].to_csv('explore/Lasso_train_data.csv')
 scaler.transform(train_data)[chosen_col].to_csv('explore/Lasso_transformed_train_data.csv')
 data[chosen_col].to_csv('explore/Lasso_data.csv')
 scaler.transform(data)[chosen_col].to_csv('explore/Lasso_transformed_data.csv')
-
+'''
 train_pred = regressor_predict(regressor, train_data, scaler)
 pred_score = regressor_predict(regressor, data, scaler)
 
